@@ -3,7 +3,7 @@ name: sfo-terminal-2-rt
 airport: sfo-terminal-2
 
 simulation:
-  reschedule_cycle: 30
+  reschedule_cycle: 5
 
 uncertainty:
   enabled: true

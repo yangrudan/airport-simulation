@@ -148,7 +148,15 @@ class MapView {
 
     __drawNode(lat, lng, image, label, content) {
         const infowindow = new google.maps.InfoWindow({
-            content: content
+            content: `
+          <div>
+              <p>Additional Info:</p>
+              <ul>
+                  <li>Flight Number: ${content.flightNumber}</li>
+                  <li>Status: ${content.status}</li>
+              </ul>
+          </div>
+        `
         });
 
         const marker = new google.maps.Marker({
@@ -193,6 +201,8 @@ class MapView {
     }
 
     drawAircraft(lat, lng, state, name, content) {
+        // 定义飞机的图标样式，包括旋转角度和颜色
+
         return this.__drawNode(lat, lng, this.__getAircraftIcon(0, state), name, content);
     }
 
@@ -262,7 +272,11 @@ class MapView {
                 newAircraftSet.set(each.name, aircraft);
                 this.aircraft.delete(each.name);
             } else {
-                const aircraft = this.drawAircraft(each.lat, each.lng, each.state, each.name, "");
+                const context = {
+                    flightNumber: each.name,
+                    status: each.status,
+                };
+                const aircraft = this.drawAircraft(each.lat, each.lng, each.state, each.name, context);
                 newAircraftSet.set(each.name, aircraft);
             }
         }

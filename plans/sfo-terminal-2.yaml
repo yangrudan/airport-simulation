@@ -1,3 +1,7 @@
 ---
 name: sfo-terminal-2
 airport: sfo-terminal-2
+
+simulation:
+  # Seconds between each reschedule
+  reschedule_cycle: 5
