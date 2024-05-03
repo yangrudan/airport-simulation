@@ -147,16 +147,26 @@ class MapView {
     }
 
     __drawNode(lat, lng, image, label, content) {
+        // 检查 content 是否为对象，并且具有所需的属性
+        let infowindowContent;
+        if (typeof content === 'object' && content !== null && 'flightNumber' in content && 'status' in content) {
+            // 如果是对象，则构建包含附加信息的 HTML 字符串
+            infowindowContent = `
+            <div>
+                <p>Additional Info:</p>
+                <ul>
+                    <li>Flight Number: ${content.flightNumber}</li>
+                    <li>Status: ${content.status}</li>
+                </ul>
+            </div>
+        `;
+        } else {
+            // 如果不是对象，则 content 是一个直接用于显示的字符串
+            infowindowContent = content;
+        }
+
         const infowindow = new google.maps.InfoWindow({
-            content: `
-          <div>
-              <p>Additional Info:</p>
-              <ul>
-                  <li>Flight Number: ${content.flightNumber}</li>
-                  <li>Status: ${content.status}</li>
-              </ul>
-          </div>
-        `
+            content: infowindowContent
         });
 
         const marker = new google.maps.Marker({
