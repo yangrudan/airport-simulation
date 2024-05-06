@@ -26,7 +26,6 @@ const FAST_FORWARD_STEP_SIZE = 120;
 
 class VisualizationView {
     constructor(modeAndPlan) {
-        this.mapView = new MapView(document.getElementById("map"));
         this.mode = modeAndPlan[0];
         this.plan = modeAndPlan[1];
 
@@ -34,6 +33,9 @@ class VisualizationView {
 
         this.initComponents();
         this.initDataSource();
+
+        this.mapView = new MapView(document.getElementById("map"), this.dataConnector);
+
     }
 
     initDataSource() {

@@ -85,7 +85,7 @@ const RUNWAY_UNIT_LINK_WEIGHT = 12 * ZOOM_FACTORS[DEFAULT_ZOOM],
     PUSHBACKWAY_UNIT_LINK_WEIGHT = 8 * ZOOM_FACTORS[DEFAULT_ZOOM];
 
 class MapView {
-    constructor(rootElement) {
+    constructor(rootElement, dataConnector) {
         this.map = new google.maps.Map(rootElement, {
             center: {lat: DEFAULT_LAT, lng: DEFAULT_LNG},
             zoom: DEFAULT_ZOOM,
@@ -100,6 +100,8 @@ class MapView {
             fullscreenControl: false,
             styles: MAP_STYLE
         });
+
+        this.dataConnector = dataConnector;
 
         this.runways = [];
         this.pushbackways = [];
@@ -146,40 +148,60 @@ class MapView {
         this.pushbackways.push(link);
     }
 
-    __drawNode(lat, lng, image, label, content) {
-        // 检查 content 是否为对象，并且具有所需的属性
-        let infowindowContent;
-        if (typeof content === 'object' && content !== null && 'flightNumber' in content && 'status' in content) {
-            // 如果是对象，则构建包含附加信息的 HTML 字符串
-            infowindowContent = `
+    getCurrentAircraftInfo(aircraftName) {
+        // 获取当前状态中所有飞机的信息
+        const currentState = this.dataConnector.currentState();
+        // 从当前状态中找到与 aircraftName 匹配的飞机信息
+        return currentState.aircrafts.find(a => a.callsign === aircraftName);
+    }
+
+    __generateInfoWindowContent(content) {
+        // 生成信息窗口的HTML内容
+        if (typeof content === 'object' && content !== null && 'callsign' in content && 'state' in content) {
+            let statusText = content["is_delayed"] ? 'Hold' : 'Moving';
+            return `
             <div>
-                <p>Additional Info:</p>
-                <ul>
-                    <li>Flight Number: ${content.flightNumber}</li>
-                    <li>Status: ${content.status}</li>
-                </ul>
+                <p>Flight Number: ${content.callsign}</p>
+                <p>Status:  ${statusText}</p>
+                <!-- 可以添加更多详细信息 -->
             </div>
         `;
         } else {
             // 如果不是对象，则 content 是一个直接用于显示的字符串
-            infowindowContent = content;
+            return content;
         }
+    }
 
-        const infowindow = new google.maps.InfoWindow({
-            content: infowindowContent
-        });
-
+    __drawNode(lat, lng, image, label, content) {
         const marker = new google.maps.Marker({
             position: {lat: lat, lng: lng},
             map: this.map,
             label: label,
             icon: image,
-            zIndex: 999
+            zIndex: 999,
+            obj: this,
+            static_content: content
         });
 
-        marker.addListener("click", function () {
-            infowindow.open(this.map, marker);
-        });
+        marker.addListener("click", function() {
+            // 通过 marker.aircraftName 获取飞机的名字
+            const aircraftName = this.label;
+            // 获取当前状态中该飞机的信息
+            const aircraftInfo = this.obj.getCurrentAircraftInfo(aircraftName);
+            let infoWindowContent; //Gate保持static_content
+            if (aircraftInfo) {
+                // 使用获取到的信息生成 infoWindow 内容
+                infoWindowContent = this.obj.__generateInfoWindowContent(aircraftInfo);
+            }
+            else {
+                infoWindowContent = this.static_content;
+            }
+            // 打开 infoWindow
+            const infowindow = new google.maps.InfoWindow({
+                content: infoWindowContent
+            });
+            infowindow.open(this.obj.map, marker);
+        }.bind(marker));
 
         return marker;
     }
